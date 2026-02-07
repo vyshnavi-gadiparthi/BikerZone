@@ -18,8 +18,9 @@ function setupLoginForm() {
     const loginForm = document.getElementById('loginForm');
     const mobileInput = document.getElementById('mobileNumber');
     const errorMessage = document.getElementById('errorMessage');
+    let isOtpStep = false;
 
-    // Clear error message on input
+    // Clear error message on mobile input
     mobileInput.addEventListener('input', () => {
         errorMessage.textContent = '';
         // Only allow numbers
@@ -29,55 +30,83 @@ function setupLoginForm() {
     // Handle form submission
     loginForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        handleLogin();
+        if (!isOtpStep) {
+            handleMobileValidation();
+        } else {
+            handleOtpLogin();
+        }
     });
-}
 
-// Validate and handle login
-function handleLogin() {
-    const mobileNumber = document.getElementById('mobileNumber').value.trim();
-    const errorMessage = document.getElementById('errorMessage');
-    const loginBtn = document.querySelector('.login-btn');
+    function handleMobileValidation() {
+        const mobileNumber = document.getElementById('mobileNumber').value.trim();
+        const errorMessage = document.getElementById('errorMessage');
+        const loginBtn = document.querySelector('.login-btn');
+        const footerText = document.getElementById('footerText');
 
-    // Reset error message
-    errorMessage.textContent = '';
+        // Reset error message
+        errorMessage.textContent = '';
 
-    // Validation
-    if (!mobileNumber) {
-        errorMessage.textContent = 'Please enter a mobile number';
-        return;
+        // Validation
+        if (!mobileNumber) {
+            errorMessage.textContent = 'Please enter a mobile number';
+            return;
+        }
+
+        if (mobileNumber.length !== 10) {
+            errorMessage.textContent = 'Mobile number must be exactly 10 digits';
+            return;
+        }
+
+        if (!/^[0-9]{10}$/.test(mobileNumber)) {
+            errorMessage.textContent = 'Mobile number should contain only digits';
+            return;
+        }
+
+        // Check if first digit is between 6-9 (valid Indian mobile number format)
+        if (!/^[6-9]/.test(mobileNumber)) {
+            errorMessage.textContent = 'Mobile number should start with 6, 7, 8, or 9';
+            return;
+        }
+
+        // Switch to OTP step
+        isOtpStep = true;
+        document.getElementById('mobileGroup').style.display = 'none';
+        document.getElementById('otpGroup').style.display = 'flex';
+        footerText.textContent = 'Enter the OTP sent to your mobile number';
+        loginBtn.textContent = 'Verify OTP';
+        document.getElementById('otp').focus();
     }
 
-    if (mobileNumber.length !== 10) {
-        errorMessage.textContent = 'Mobile number must be exactly 10 digits';
-        return;
+    function handleOtpLogin() {
+        const otp = document.getElementById('otp').value.trim();
+        const otpErrorMessage = document.getElementById('otpErrorMessage');
+        const loginBtn = document.querySelector('.login-btn');
+        const mobileNumber = document.getElementById('mobileNumber').value.trim();
+
+        // Reset error message
+        otpErrorMessage.textContent = '';
+
+        // Validate OTP
+        if (!otp) {
+            otpErrorMessage.textContent = 'Please enter OTP';
+            return;
+        }
+
+        // Disable button during login process
+        loginBtn.disabled = true;
+        loginBtn.textContent = 'Logging in...';
+
+        // Simulate login process
+        setTimeout(() => {
+            // Save login data to localStorage
+            localStorage.setItem('userMobile', mobileNumber);
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('loginTime', new Date().toISOString());
+
+            // Redirect to home page
+            window.location.href = 'home.html';
+        }, 1000);
     }
-
-    if (!/^[0-9]{10}$/.test(mobileNumber)) {
-        errorMessage.textContent = 'Mobile number should contain only digits';
-        return;
-    }
-
-    // Check if first digit is between 6-9 (valid Indian mobile number format)
-    if (!/^[6-9]/.test(mobileNumber)) {
-        errorMessage.textContent = 'Mobile number should start with 6, 7, 8, or 9';
-        return;
-    }
-
-    // Disable button during login process
-    loginBtn.disabled = true;
-    loginBtn.textContent = 'Logging in...';
-
-    // Simulate login process
-    setTimeout(() => {
-        // Save login data to localStorage
-        localStorage.setItem('userMobile', mobileNumber);
-        localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('loginTime', new Date().toISOString());
-
-        // Redirect to home page
-        window.location.href = 'home.html';
-    }, 1000);
 }
 
 // ============ HOME PAGE FUNCTIONALITY ============
